@@ -109,7 +109,8 @@ exports.handler = async (event) => {
       custom_field_12345: message || '',
     };
 
-    const pabauUrl = `https://api.oauth.pabau.com/${apiKey}/leads/create`;
+    // TESTING: Send to webhook.site instead of Pabau
+    const pabauUrl = `https://webhook.site/9517ca4e-f574-4f33-a51f-829dab4c7153`;
     const pabauResponse = await postJson(pabauUrl, pabauPayload);
 
     return {
