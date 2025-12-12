@@ -74,8 +74,8 @@ exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') {
       return {
         statusCode: 405,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ success: false, message: 'Method Not Allowed' }),
+        headers: { 'Content-Type': 'text/plain' },
+        body: 'Method Not Allowed',
       };
     }
 
@@ -95,11 +95,8 @@ exports.handler = async (event) => {
     if (!firstName || !lastName || !email) {
       return {
         statusCode: 400,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          success: false,
-          message: 'Missing required fields (first name, last name, email)',
-        }),
+        headers: { 'Content-Type': 'text/plain' },
+        body: 'Missing required fields',
       };
     }
 
@@ -116,22 +113,15 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        success: true,
-        lead_id: pabauResponse && pabauResponse.lead_id ? pabauResponse.lead_id : null,
-      }),
+      headers: { 'Content-Type': 'text/plain' },
+      body: 'OK',
     };
   } catch (error) {
     console.error('Pabau lead creation failed', error);
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        success: false,
-        message: 'Failed to create lead',
-        details: error.message || 'Unexpected error',
-      }),
+      headers: { 'Content-Type': 'text/plain' },
+      body: 'Error',
     };
   }
 };
