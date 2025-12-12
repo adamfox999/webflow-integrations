@@ -130,8 +130,12 @@ exports.handler = async (event) => {
     // Parse Webflow webhook JSON payload
     const webhookData = JSON.parse(event.body);
     
+    // DEBUG: Log incoming webhook data
+    console.log('Webhook received:', JSON.stringify(webhookData, null, 2));
+    
     // Verify this is a form submission event
     if (webhookData.triggerType !== 'form_submission') {
+      console.log('Invalid trigger type:', webhookData.triggerType);
       return {
         statusCode: 400,
         headers: { 'Content-Type': 'text/plain' },
@@ -140,6 +144,9 @@ exports.handler = async (event) => {
     }
 
     const { firstName, lastName, email, message } = extractLeadFields(webhookData.payload);
+    
+    // DEBUG: Log extracted fields
+    console.log('Extracted fields:', { firstName, lastName, email, message });
 
     if (!firstName || !lastName || !email) {
       return {
