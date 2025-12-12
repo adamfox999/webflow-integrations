@@ -79,14 +79,15 @@ exports.handler = async (event) => {
       };
     }
 
-    const apiKey = process.env.PABAU_API_KEY;
-    if (!apiKey) {
-      return {
-        statusCode: 500,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ success: false, message: 'Missing Pabau API key' }),
-      };
-    }
+    // TESTING: API key check disabled for webhook.site testing
+    // const apiKey = process.env.PABAU_API_KEY;
+    // if (!apiKey) {
+    //   return {
+    //     statusCode: 500,
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ success: false, message: 'Missing Pabau API key' }),
+    //   };
+    // }
 
     const params = parseFormBody(event.body);
     const { firstName, lastName, email, message } = extractLeadFields(params);
