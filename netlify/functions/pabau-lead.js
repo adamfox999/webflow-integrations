@@ -36,7 +36,7 @@ function extractLeadFields(payload) {
   return {
     firstName: data['First Name'] || data['first_name'] || data.firstName || '',
     lastName: data['Last Name'] || data['last_name'] || data.lastName || '',
-    email: data.email || data.Email || '',
+    email: data.email || data.Email || data.Field || '', // Added 'Field' as fallback
     message: data.Message || data.message || '',
   };
 }
@@ -148,11 +148,11 @@ exports.handler = async (event) => {
     // DEBUG: Log extracted fields
     console.log('Extracted fields:', { firstName, lastName, email, message });
 
-    if (!firstName || !lastName || !email) {
+    if (!email) {
       return {
         statusCode: 400,
         headers: { 'Content-Type': 'text/plain' },
-        body: 'Missing required fields',
+        body: 'Missing required email field',
       };
     }
 
