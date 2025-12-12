@@ -1,18 +1,43 @@
 const https = require('node:https');
+const crypto = require('node:crypto');
 
-// Parse the incoming x-www-form-urlencoded body into a key/value helper.
-function parseFormBody(body) {
-  return new URLSearchParams(body || '');
+// Verify Webflow webhook signature to ensure request authenticity
+function verifyWebflowSignature(secretKey, timestamp, requestBody, providedSignature) {
+  try {
+    const requestTimestamp = parseInt(timestamp, 10);
+    
+    // Generate HMAC hash using timestamp and body
+    const data = `${requestTimestamp}:${requestBody}`;
+    const hash = crypto.createHmac('sha256', secretKey)
+                      .update(data)
+                      .digest('hex');
+    
+    // Compare generated hash with provided signature
+    if (!crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(providedSignature, 'hex'))) {
+      throw new Error('Invalid signature');
+    }
+    
+    // Validate timestamp (within 5 minutes to prevent replay attacks)
+    const currentTime = Date.now();
+    if (currentTime - requestTimestamp > 300000) {
+      throw new Error('Request is older than 5 minutes');
+    }
+    
+    return true;
+  } catch (err) {
+    console.error(`Signature verification failed: ${err.message}`);
+    return false;
+  }
 }
 
-// Extract key Webflow fields while gracefully handling missing data.
-function extractLeadFields(params) {
-  const orderedFields = params.getAll('field');
+// Extract lead fields from Webflow webhook payload
+function extractLeadFields(payload) {
+  const data = payload.data || {};
   return {
-    firstName: orderedFields[0] || params.get('first_name') || '',
-    lastName: orderedFields[1] || params.get('last_name') || '',
-    email: orderedFields[2] || params.get('email') || '',
-    message: params.get('Message') || params.get('message') || '',
+    firstName: data['First Name'] || data['first_name'] || data.firstName || '',
+    lastName: data['Last Name'] || data['last_name'] || data.lastName || '',
+    email: data.email || data.Email || '',
+    message: data.Message || data.message || '',
   };
 }
 
@@ -79,18 +104,42 @@ exports.handler = async (event) => {
       };
     }
 
-    // TESTING: API key check disabled for webhook.site testing
-    // const apiKey = process.env.PABAU_API_KEY;
-    // if (!apiKey) {
-    //   return {
-    //     statusCode: 500,
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({ success: false, message: 'Missing Pabau API key' }),
-    //   };
-    // }
+    // Verify Webflow webhook signature
+    const secretKey = process.env.WEBFLOW_SECRET_KEY;
+    const timestamp = event.headers['x-webflow-timestamp'];
+    const providedSignature = event.headers['x-webflow-signature'];
+    
+    if (!secretKey) {
+      console.error('WEBFLOW_SECRET_KEY not configured');
+      return {
+        statusCode: 500,
+        headers: { 'Content-Type': 'text/plain' },
+        body: 'Server configuration error',
+      };
+    }
+    
+    if (!verifyWebflowSignature(secretKey, timestamp, event.body, providedSignature)) {
+      console.error('Invalid webhook signature');
+      return {
+        statusCode: 401,
+        headers: { 'Content-Type': 'text/plain' },
+        body: 'Unauthorized',
+      };
+    }
 
-    const params = parseFormBody(event.body);
-    const { firstName, lastName, email, message } = extractLeadFields(params);
+    // Parse Webflow webhook JSON payload
+    const webhookData = JSON.parse(event.body);
+    
+    // Verify this is a form submission event
+    if (webhookData.triggerType !== 'form_submission') {
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'text/plain' },
+        body: 'Invalid trigger type',
+      };
+    }
+
+    const { firstName, lastName, email, message } = extractLeadFields(webhookData.payload);
 
     if (!firstName || !lastName || !email) {
       return {
