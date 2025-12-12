@@ -112,9 +112,9 @@ exports.handler = async (event) => {
     const pabauResponse = await postJson(pabauUrl, pabauPayload);
 
     return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'text/plain' },
-      body: 'OK',
+      statusCode: 204,
+      headers: {},
+      body: '',
     };
   } catch (error) {
     console.error('Pabau lead creation failed', error);
