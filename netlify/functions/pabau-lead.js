@@ -160,11 +160,22 @@ exports.handler = async (event) => {
       first_name: firstName,
       last_name: lastName,
       email,
-      custom_field_12345: message || '',
+      owner: process.env.PABAU_LEAD_OWNER || 'Webflow Form',
+      description: message || '',
     };
 
-    // TESTING: Send to webhook.site instead of Pabau
-    const pabauUrl = `https://webhook.site/9517ca4e-f574-4f33-a51f-829dab4c7153`;
+    // Send to Pabau API
+    const apiKey = process.env.PABAU_API_KEY;
+    if (!apiKey) {
+      console.error('PABAU_API_KEY not configured');
+      return {
+        statusCode: 500,
+        headers: { 'Content-Type': 'text/plain' },
+        body: 'Server configuration error',
+      };
+    }
+    
+    const pabauUrl = `https://api.oauth.pabau.com/${apiKey}/leads/create`;
     const pabauResponse = await postJson(pabauUrl, pabauPayload);
 
     return {
