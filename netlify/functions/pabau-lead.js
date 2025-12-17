@@ -34,9 +34,9 @@ function verifyWebflowSignature(secretKey, timestamp, requestBody, providedSigna
 function extractLeadFields(payload) {
   const data = payload.data || {};
   return {
-    firstName: data['First Name'] || data['first_name'] || data.firstName || '',
-    lastName: data['Last Name'] || data['last_name'] || data.lastName || '',
-    email: data.email || data.Email || data.Field || '', // Added 'Field' as fallback
+    firstName: data.Forename || data['First Name'] || data['first_name'] || data.firstName || '',
+    lastName: data.Surname || data['Last Name'] || data['last_name'] || data.lastName || '',
+    email: data.Email || data.email || data.Field || '',
     message: data.Message || data.message || '',
   };
 }
