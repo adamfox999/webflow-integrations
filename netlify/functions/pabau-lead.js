@@ -41,17 +41,21 @@ function extractLeadFields(payload) {
   };
 }
 
-// Minimal HTTPS JSON client using Node's built-in https module.
-function postJson(urlString, payload) {
-  const data = JSON.stringify(payload);
+// Send form-encoded data to Pabau API (they expect form-data, not JSON)
+function postFormData(urlString, payload) {
+  // Convert payload to form-encoded string
+  const formData = Object.keys(payload)
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(payload[key])}`)
+    .join('&');
+    
   return new Promise((resolve, reject) => {
     const request = https.request(
       urlString,
       {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(data),
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(formData),
         },
       },
       (response) => {
@@ -89,7 +93,7 @@ function postJson(urlString, payload) {
     );
 
     request.on('error', (error) => reject(error));
-    request.write(data);
+    request.write(formData);
     request.end();
   });
 }
@@ -181,7 +185,7 @@ exports.handler = async (event) => {
     console.log('Sending to Pabau:', JSON.stringify(pabauPayload, null, 2));
     
     const pabauUrl = `https://api.oauth.pabau.com/${apiKey}/leads/create`;
-    const pabauResponse = await postJson(pabauUrl, pabauPayload);
+    const pabauResponse = await postFormData(pabauUrl, pabauPayload);
     
     // DEBUG: Log Pabau response
     console.log('Pabau response:', JSON.stringify(pabauResponse, null, 2));
