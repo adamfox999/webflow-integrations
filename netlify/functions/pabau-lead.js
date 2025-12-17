@@ -156,16 +156,9 @@ exports.handler = async (event) => {
       };
     }
 
-    const pabauPayload = {
-      first_name: firstName,
-      last_name: lastName,
-      email,
-      owner: process.env.PABAU_LEAD_OWNER || 'Webflow Form',
-      description: message || '',
-    };
-
-    // Send to Pabau API
+    // Build Pabau payload
     const apiKey = process.env.PABAU_API_KEY;
+    
     if (!apiKey) {
       console.error('PABAU_API_KEY not configured');
       return {
@@ -174,9 +167,24 @@ exports.handler = async (event) => {
         body: 'Server configuration error',
       };
     }
+
+    const pabauPayload = {
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      owner: process.env.PABAU_LEAD_OWNER || 'Webflow Form',
+      description: message || '',
+      pipeline_stage_id: 20250, // New Lead stage
+    };
+
+    // DEBUG: Log payload being sent to Pabau
+    console.log('Sending to Pabau:', JSON.stringify(pabauPayload, null, 2));
     
     const pabauUrl = `https://api.oauth.pabau.com/${apiKey}/leads/create`;
     const pabauResponse = await postJson(pabauUrl, pabauPayload);
+    
+    // DEBUG: Log Pabau response
+    console.log('Pabau response:', JSON.stringify(pabauResponse, null, 2));
 
     return {
       statusCode: 204,
